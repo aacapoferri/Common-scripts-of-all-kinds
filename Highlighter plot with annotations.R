@@ -20,22 +20,22 @@ output_plot <- "PID X_alignment with master_collapsed_mutation_matrix_highlighte
 
 # ---- DEFINE FEATURES WITH FIXED VISUAL STACKING ORDER ----
 features <- tribble(
+  features <- tribble(
   ~label,     ~start, ~end,   ~feature_tier,
-  "5' UTR",      1, 1316,        3,
-  "Psi",        18,  504,        2,
-  "gag",       505, 1316,        2,
-  "L",        2271, 2315,        3,
-  "V",        1317, 1643,        2,
-  "CDR3",     1644, 1685,        2,
-  "J",        1686, 1718,        2,
-  "C",        1719, 2270,        2,
-  "TCRb",     1317, 2270,        3,
-  "V",        2316, 2648,        2,
-  "CDR3",     2649, 2696,        2,
-  "J",        2697, 2729,        2,
-  "C",        2730, 3137,        2,
-  "TCRa",     2316, 3137,        3,
-  "3' UTR",   3137, 3275,        3
+  "5' UTR",       1, 503,        3,
+  "gag",       504, 1315,        3,
+  "L",        2270, 2314,        3,
+  "V",        1316, 1642,        2,
+  "CDR3",     1643, 1684,        2,
+  "J",        1685, 1717,        2,
+  "C",        1718, 2269,        2,
+  "TCRb",     1316, 2269,        3,
+  "V",        2315, 2647,        2,
+  "CDR3",     2648, 2695,        2,
+  "J",        2696, 2728,        2,
+  "C",        2729, 3136,        2,
+  "TCRa",     2315, 3136,        3,
+  "3' UTR",   3137, 3238,        3
 )
 
 # ---- READ AND PREPARE MUTATION MATRIX ----
