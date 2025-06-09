@@ -22,7 +22,7 @@ collapsed <- split(seq_df$name, seq_df$seq)
 # ---- Create isolate names with unique number and collapsed count ----
 isolate_ids <- seq_along(collapsed)
 counts <- lengths(collapsed)
-isolate_labels <- paste0("201403 isolate ", isolate_ids, " (", counts, ")")
+isolate_labels <- paste0("PID X isolate ", isolate_ids, " (", counts, ")")
 
 # ---- Create collapsed DNAStringSet ----
 unique_seqs <- DNAStringSet(names(collapsed))
