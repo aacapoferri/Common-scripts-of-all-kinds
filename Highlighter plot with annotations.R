@@ -15,8 +15,8 @@
 library(tidyverse)
 
 # ---- MODIFY HERE: Input files ----
-mutation_csv <- "201403_alignment with master_collapsed_mutation_matrix.csv"
-output_plot <- "201403_alignment with master_collapsed_mutation_matrix_highlighter_plot.png"
+mutation_csv <- "PID X_alignment with master_collapsed_mutation_matrix.csv"
+output_plot <- "PID X_alignment with master_collapsed_mutation_matrix_highlighter_plot.png"
 
 # ---- DEFINE FEATURES WITH FIXED VISUAL STACKING ORDER ----
 features <- tribble(
