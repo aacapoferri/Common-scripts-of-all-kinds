@@ -112,7 +112,7 @@ p <- ggplot() +
     A = "blue", T = "green3", C = "orange", G = "red", `-` = "gray30"
   )) +
   guides(color = "none") +
-  labs(x = "Position (bp)", y = NULL, title = "PID 201403 Proviral structures") +
+  labs(x = "Position (bp)", y = NULL, title = "PID X Proviral structures") +
   theme_minimal(base_size = 14) +
   theme(
     axis.text.y = element_text(size = 12),
