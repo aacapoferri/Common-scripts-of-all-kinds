@@ -12,7 +12,7 @@ library(Biostrings)
 library(tidyverse)
 
 # ---- Load aligned sequences ----
-fasta_file <- "201403_alignment with master_collapsed.fasta"  # <-- Change to your file, needs to be non-collapsed
+fasta_file <- "PID X_alignment with master_collapsed.fasta"  # <-- Change to your file, needs to be non-collapsed
 seqs <- readDNAStringSet(fasta_file)
 seq_mat <- as.matrix(seqs)
 
@@ -142,8 +142,8 @@ sub_summary_extended <- rbind(sub_summary, summary_row)
 # ---- Write to disk ----
 #Change the names of the files as needed.
 
-write.csv(mutation_matrix, "201403_alignment with master_collapsed_mutation_matrix.csv", row.names = TRUE)
-write.csv(sub_summary_extended, "201403_alignment with master_collapsed_summary_extended.csv", row.names = TRUE)
+write.csv(mutation_matrix, "PID X_alignment with master_collapsed_mutation_matrix.csv", row.names = TRUE)
+write.csv(sub_summary_extended, "PID X_alignment with master_collapsed_summary_extended.csv", row.names = TRUE)
 
 cat("✔ Written: mutation_collapsed_matrix.csv and substitution_summary.csv\n")
 ### End ###
