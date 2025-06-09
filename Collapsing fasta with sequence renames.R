@@ -11,7 +11,7 @@
 library(Biostrings)
 
 # ---- Load FASTA ----
-fasta_file <- "201403_alignment without master.fasta" #switch with .fasta you want
+fasta_file <- "PID X_alignment without master.fasta" #switch with .fasta you want
 sequences <- readDNAStringSet(fasta_file)
 
 # ---- Collapse identical sequences ----
@@ -29,7 +29,7 @@ unique_seqs <- DNAStringSet(names(collapsed))
 names(unique_seqs) <- isolate_labels
 
 # ---- Write collapsed FASTA ----
-writeXStringSet(unique_seqs, "201403_alignment without master_collapsed.fasta")
+writeXStringSet(unique_seqs, "PID X_alignment without master_collapsed.fasta")
 
 # ---- Create and write mapping CSV ----
 mapping_df <- data.frame(
@@ -38,5 +38,5 @@ mapping_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-write.csv(mapping_df, "201403_alignment without master_collapsed.csv", row.names = FALSE)
+write.csv(mapping_df, "PID X_alignment without master_collapsed.csv", row.names = FALSE)
 ### End ###
