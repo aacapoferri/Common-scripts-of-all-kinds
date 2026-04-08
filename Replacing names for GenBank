@@ -33,4 +33,31 @@ writeXStringSet(sequences, output_fasta)
 
 cat("Modified FASTA file saved as", output_fasta, "\n")
 
+
+###### QUICK SANITY CHECK #######
+# meant to check to ensure there are no duplicate names, if so it will return answer
+
+#load library
+library(Biostrings)
+
+# File path
+fasta_file <- "file_name_new.fasta"
+
+# Load FASTA sequences
+sequences <- readDNAStringSet(fasta_file)
+
+# Get sequence names
+seq_names <- names(sequences)
+
+# Check for duplicates
+dup_names <- seq_names[duplicated(seq_names)]
+
+# Print result
+if (length(dup_names) == 0) {
+  cat("No duplicate sequence names found.\n")
+} else {
+  cat("Duplicate sequence names found:\n")
+  print(unique(dup_names))
+}
+
 ### END ###
