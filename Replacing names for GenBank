@@ -1,0 +1,36 @@
+# Replacing sequence names for GenBank submission#
+
+# quick run guide:
+  # fasta_file: original fasta file with old names
+  # csv_file: file must contain "old_name" and "new_name" headers. The old_name is the original sequence name. The new_name should be what you want for GenBank submission
+  # output_fasta: fasta file will now contain the new names, importantly, it will NOT replace the original fasta file
+
+# load libraries
+library(Biostrings)
+library(readr)
+library(dplyr)
+
+# define file paths
+fasta_file <- "file_name.fasta"  
+csv_file <- "file_name.csv" 
+output_fasta <- "file_name_new.fasta"
+
+# Load FASTA sequences
+sequences <- readDNAStringSet(fasta_file)
+
+# Load CSV mapping (ensure column names match exactly)
+name_mapping <- read_csv(csv_file)
+
+# Create a named vector for mapping
+name_dict <- setNames(name_mapping$new_name, name_mapping$old_name)
+
+# Rename sequences, keeping original names if no match is found
+new_names <- ifelse(names(sequences) %in% name_mapping$old_name, name_dict[names(sequences)], names(sequences))
+names(sequences) <- new_names
+
+# Export new FASTA file
+writeXStringSet(sequences, output_fasta)
+
+cat("Modified FASTA file saved as", output_fasta, "\n")
+
+### END ###
