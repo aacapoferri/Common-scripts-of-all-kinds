@@ -1,13 +1,13 @@
 ###################################################
 #              Collapsing sequences               #
 #             Version 1.0 (June 2025)             #
-#           Written by Adam A. Capoferri, PhD     #               
+#           Written by Adam A. Capoferri, PhD     #
+#    Contact information: adam.capoferri@nih.gov  #
 ###################################################
 
 # Collapse .fasta sequences where you are able to change the name and isolate 1 to n where the number of sequences collapsed is transferred to "()". So PID A isolate (10) indicates 10 sequences were collapsed into one.
 
-# As always, ensure all packages are installed first.
-
+# Load library
 library(Biostrings)
 
 # ---- Load FASTA ----
