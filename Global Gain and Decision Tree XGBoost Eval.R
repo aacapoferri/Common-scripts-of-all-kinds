@@ -6,6 +6,13 @@
 ####################################################
 
 # This script is meant to evaluate a machine-learning prediciton model. It was initially created to for the CRF01AE tropism prediction but should be applicable for any XGBoost visualization. 
+# Global feature importance is from trained XGBoost model using the native importance metrics: gain, cover, and frequency. Model importance scores are extracted from the fitted xgboost engine. 
+
+# Definitions of sorts
+# Gain: average improvement in the objective function (loss reduction) attributable to splits on a given feature, summed across all trees and normalized
+# Cover: average number (or sum of weights) of training smaples affected by splits of a given feature
+# Frequency: number of times a feature was used to split across all trees
+# Representative boosted tree: the structure of the fitted boosted model as a single representative decision tree from XGBoost ensemble (tree index=0). Visualization displays internal nodes labeled with the splitting feature, split threshold, and associated loss reduction (gain), and terminal nodes labels with their contribution to the model's raw predictive score (log-odds).
 
 # Publication-ready XGBoost visualization (tidymodels)
 # Outputs:
