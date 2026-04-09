@@ -23,17 +23,20 @@ library(cowplot)
 fasta_files <- list.files(path = "file_path", pattern = "\\.fasta$", full.names = TRUE)
 
 # defining amino acids into class and color
-aa_chars <- c("A", "V", "I", "L", "M", "F", "W", "P", "G",  # Nonpolar
-              "S", "T", "Y", "C", "N", "Q",                 # Polar
-              "D", "E",                                     # Acidic (negatively charged)
-              "R", "K", "H")                                # Basic (positively charged)
+aa_chars <- c("G", "A", "V", "L", "I", "M", "P",      # Nonpolar, aliphatic
+              "F", "W", "Y",                          # Nonpolar, aromatic
+              "C", "S", "T", "N", "Q",                # Polar uncharged
+              "K", "R", "H",                          # Polar positive charged
+              "D", "E")                               # Polar negative charged
 
-aa_groups <- c(rep("Nonpolar", 9), rep("Polar", 6), rep("Acidic", 2), rep("Basic", 3))
+aa_groups <- c(rep('Nonpolar, aliphatic', 7), rep('Nonpolar, aromatic', 3), rep('Polar, uncharged', 5), rep('Polar, positive', 3), rep('Polar, negative', 2))
 
-aa_colors <- c(rep("#000000", 9),  # Nonpolar, black
-               rep("#2ca02c", 6),  # Polar, green
-               rep("#1f77b4", 2),  # Acidic, blue
-               rep("#d62728", 3))  # Basic, red
+aa_colors <- c(rep("#058644", 7),  # Nonpolar, aliphatic (green)
+               rep("#720091", 3),  # Nonpolar, aromatic (purple)
+               rep("#2E2E2E", 5),  # Polar, uncharged black)
+               rep("#C5003E", 3),  # Polar, positive (red)
+               rep("#0046C5", 2))  # Polar, negative (blue)
+
 
 custom_col_scheme <- make_col_scheme(
   chars = aa_chars,
