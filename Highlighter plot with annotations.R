@@ -1,27 +1,23 @@
 ###################################################
-#         Highlighter plot with annotationn       #
-#             Version 1.0 (June 2025)             #
-#         Written by Adam A. Capoferri, PhD       #               
+#         Highlighter plot with annotation        #
+#                  Version 2.0.                   #
+#         Written by Adam A. Capoferri, PhD       #
 ###################################################
 
-# This is a generic highlighter plot script that can be used. The csv file that is used is generated from the "Nucleotide datamatrix and mutation frequency.R script. Here the first sequence (reference) is not shown but any collapsed sequences that have no differences to the reference will be the first line. The order of the sequences go from the #most collapsed to least. Nucleotides for A, C, T, G, (and gaps) are displayed. The mutation relative to the reference is shown in the highlighter plot. 
-
-#When it comes to the annotations features, this can become a little tricky. The current set up is for TCR transgene proviruses. The order can be played around with a tiny bit but things do start to get wonky. The ~feature_tier is key so that the features are flying off somewhere. This is currently set so that the CDR3 feature is set below its annotation map so that it is visible. 
-
-#There is a jitter to help ensure that mutations don't overlap, however if they are too close together the fine-tuning of jitter can't properly separate them without sending other elements off base. It is cumbersome, but some hand editing in Illustrator or similar might be necessary in some cases.
-
-# As always, ensure all packages are installed first.
-
+# ---- LOAD LIBRARIES ----
 library(tidyverse)
+library(dplyr)
+library(tibble)
+library(stringr)
 
-# ---- MODIFY HERE: Input files ----
-mutation_csv <- "PID X_alignment with master_collapsed_mutation_matrix.csv"
-output_plot <- "PID X_alignment with master_collapsed_mutation_matrix_highlighter_plot.png"
+# ---- INPUT FILES ----
+mutation_csv <- "name.csv" #change the name of the csv file
+output_plot  <- "name.pdf" #change the name of the pdf file
 
-# ---- DEFINE FEATURES WITH FIXED VISUAL STACKING ORDER ----
-features <- tribble(
-  features <- tribble(
-  ~label,     ~start, ~end,   ~feature_tier,
+# ---- DEFINE GENOME FEATURES ----
+# change the start and end positions before running
+features <- tribble( 
+  ~label,   ~start, ~end,  ~feature_tier,
   "5' UTR",       1, 503,        3,
   "gag",       504, 1315,        3,
   "L",        2270, 2314,        3,
@@ -38,112 +34,194 @@ features <- tribble(
   "3' UTR",   3137, 3238,        3
 )
 
-# ---- READ AND PREPARE MUTATION MATRIX ----
-mutation_df <- read.csv(mutation_csv, row.names = 1, check.names = FALSE)
-ref <- as.character(mutation_df["reference", ])
-mutation_df <- mutation_df[!(rownames(mutation_df) %in% c("reference", "count_A", "count_T", "count_C", "count_G", "total_mut")), ]
+# ---- READ MUTATION MATRIX ----
+mutation_df <- read.csv(
+  mutation_csv,
+  row.names = 1,
+  check.names = FALSE,
+  stringsAsFactors = FALSE
+)
 
-# ---- ORDER SEQUENCES BY COLLAPSED COUNT (Descending) ----
-seq_order <- rownames(mutation_df) %>%
-  tibble(seq_id = .) %>%
-  mutate(count = as.numeric(str_extract(seq_id, "(?<=\\()\\d+(?=\\))"))) %>%
-  arrange(desc(count)) %>%
+# ---- REMOVE REFERENCE ROW ----
+# the first sequence will be considered the reference/consensus
+mutation_df <- mutation_df[!rownames(mutation_df) %in% c("reference", "Reference"), ]
+
+# ---- IDENTIFY GENOMIC POSITION COLUMNS (EXCLUDE COUNTS) ----
+genome_positions <- colnames(mutation_df) %>%
+  str_subset("^[0-9]+$") %>%
+  as.numeric()
+
+stopifnot(length(genome_positions) > 0)
+
+# ---- STORE SEQUENCE IDS ----
+seq_ids <- rownames(mutation_df)
+
+# ---- COUNT MUTATIONS PER SEQUENCE (FOR ORDERING) ----
+mutation_counts <- mutation_df %>%
+  rownames_to_column("seq_id") %>%
+  pivot_longer(
+    cols = matches("^[0-9]+$"),
+    names_to = "position",
+    values_to = "base"
+  ) %>%
+  filter(!is.na(base) & base != ".") %>%
+  count(seq_id, name = "n_mutations")
+
+# ---- ORDER SEQUENCES: LEAST → MOST MUTATIONS ----
+seq_order <- tibble(seq_id = seq_ids) %>%
+  left_join(mutation_counts, by = "seq_id") %>%
+  mutate(n_mutations = replace_na(n_mutations, 0)) %>%
+  arrange(n_mutations) %>%
   mutate(seq_index = rev(row_number()))
 
-# ---- CONVERT TO LONG FORMAT ----
+# ---- UPDATE SEQUENCE LINES ----
+sequence_lines <- seq_order %>%
+  transmute(
+    seq_id,
+    seq_index,
+    y_start = seq_index,
+    y_end   = seq_index
+  )
+
+# ---- FILTER MUTATIONS TO KEPT SEQUENCES ----
+mutation_long <- mutation_long %>%
+  filter(seq_id %in% seq_order$seq_id)
+
+# ---- LONG-FORM MUTATION DATA ----
 mutation_long <- mutation_df %>%
   rownames_to_column("seq_id") %>%
-  pivot_longer(-seq_id, names_to = "position", values_to = "base") %>%
-  mutate(position = as.integer(position)) %>%
+  pivot_longer(
+    cols = matches("^[0-9]+$"),
+    names_to = "position",
+    values_to = "base"
+  ) %>%
+  mutate(position = as.numeric(position)) %>%
   filter(!is.na(base) & base != ".") %>%
   left_join(seq_order, by = "seq_id")
 
-# ---- FORMAT MUTATION LABELS ----
-ref_vec <- as.character(ref)
-names(ref_vec) <- colnames(mutation_df)
-
+# ---- PRECOMPUTE X-JITTER FOR MUTATION TICKS ----
+set.seed(123)
 mutation_long <- mutation_long %>%
-  mutate(
-    type = ifelse(base %in% c("A", "T", "C", "G"), "mutation", "gap_or_N"),
-    seq_id = factor(seq_id, levels = seq_order$seq_id),
-    base_label = ifelse(base %in% c("A", "T", "C", "G"), base, "-"),
-    ref_base = ref_vec[as.character(position)],
-    label = ifelse(base_label == "-", "-", paste0(ref_base, ">", base_label))
-  )
+  mutate(jitter_x = position + runif(n(), -0.1, 0.1))
 
-n_seq <- length(seq_order$seq_id)
+# ---- FEATURE Y POSITIONS (TOP OF PLOT) ----
+feature_y_base <- max(sequence_lines$seq_index) + 1
+features <- features %>%
+  mutate(y = feature_y_base + feature_tier * 0.9) #incresaes the tier spacing
+set.seed(123)
 
-# ---- CALCULATE Y POSITION BASED ON FIXED VISUAL TIERS ----
 features <- features %>%
   mutate(
-    ymin = n_seq + 1.5 + feature_tier,
-    ymax = n_seq + 2.5 + feature_tier,
-    ytext = n_seq + 2 + feature_tier
+    label_y = if_else(
+      feature_tier == 2,
+      y - 1,   # drop below rectangle
+      y
+    ),
+    label_x = (start + end) / 3 +
+      if_else(feature_tier == 2,
+              runif(n(), -3, 3),  # x-jitter for tier 2 only
+              0)
   )
 
-# ---- JITTER MUTATION POSITIONS ----
-set.seed(42)
-mutation_long <- mutation_long %>%
-  mutate(jitter_x = position + runif(n(), -0.2, 0.2))
-
-# ---- ALL SEQUENCE LINES ----
-sequence_lines <- seq_order %>% select(seq_id, seq_index)
-
-# ---- PLOT ----
+# ---- BUILD PLOT ----
 p <- ggplot() +
-  geom_segment(data = sequence_lines,
-               aes(x = min(as.integer(names(ref_vec))),
-                   xend = max(as.integer(names(ref_vec))),
-                   y = seq_index, yend = seq_index),
-               color = "gray80", linewidth = 0.4) +
-  geom_segment(data = mutation_long,
-               aes(x = jitter_x, xend = jitter_x,
-                   y = seq_index - 0.3, yend = seq_index + 0.3,
-                   color = base_label),
-               linewidth = 0.6) +
-  geom_text(data = mutation_long,
-            aes(x = jitter_x, y = seq_index, label = label),
-            color = "black", size = 2.5,
-            position = position_nudge(y = 0.5), vjust = 0) +
-  scale_y_continuous(breaks = sequence_lines$seq_index,
-                  labels = sequence_lines$seq_id,
-                  expand = expansion(add = 1)) +
-  scale_color_manual(values = c(
-    A = "blue", T = "green3", C = "orange", G = "red", `-` = "gray30"
-  )) +
+  
+  # Sequence baselines
+  geom_segment(
+    data = sequence_lines,
+    aes(
+      x = min(genome_positions),
+      xend = max(genome_positions),
+      y = seq_index,
+      yend = seq_index
+    ),
+    color = "gray80",
+    linewidth = 0.4
+  ) +
+  
+  # Mutation ticks
+  geom_segment(
+    data = mutation_long,
+    aes(
+      x = jitter_x,
+      xend = jitter_x,
+      y = seq_index - 0.3,
+      yend = seq_index + 0.3,
+      color = base
+    ),
+    linewidth = 0.6
+  ) +
+  
+  # Feature boxes
+  geom_rect(
+    data = features,
+    aes(
+      xmin = start,
+      xmax = end,
+      ymin = y - 0.35,
+      ymax = y + 0.35
+    ),
+    fill = "grey85",
+    color = "black"
+  ) +
+  
+  # Feature labels (centered)
+  geom_text(
+    data = features,
+    aes(
+      x = (start + end) / 2,
+      y = label_y,
+      label = label
+    ),
+    size = 3,
+    hjust = 0.5,
+    vjust = 0.5
+  ) +
+  
+  # Axes and scales
+  scale_x_continuous(
+    limits = c(min(genome_positions) - 1,
+               max(genome_positions) + 1),
+    breaks = pretty(genome_positions),
+    name   = "Genomic Position (bp)"
+  ) +
+  
+  scale_y_continuous(
+    breaks = sequence_lines$seq_index,
+    labels = sequence_lines$seq_id,
+    expand = expansion(add = c(1, 3))
+  ) +
+  
+  scale_color_manual(
+    values = c(
+      A = "red1",
+      T = "green3",
+      C = "blue2",
+      G = "orange1",
+      `-` = "gray20"
+    )
+  ) +
   guides(color = "none") +
-  labs(x = "Position (bp)", y = NULL, title = "PID X Proviral structures") +
-  theme_minimal(base_size = 14) +
+  labs(
+    x = "Genomic Position (bp)",
+    y = NULL,
+    title = ""
+  ) +
+  theme_minimal(base_size = 10) +
   theme(
-    axis.text.y = element_text(size = 12),
+    axis.text.y = element_text(size = 8),
     axis.text.x = element_text(size = 10),
     panel.grid = element_blank(),
     legend.position = "none",
     plot.title = element_text(hjust = 0.5)
   )
 
-# ---- ADD FEATURE BOXES ----
-if (nrow(features) > 0) {
-  p <- p +
-    geom_rect(data = features,
-              aes(xmin = start, xmax = end, ymin = ymin, ymax = ymax),
-              inherit.aes = FALSE,
-              fill = "white", color = "black", alpha = 0.4) +
-    geom_text(
-      data = features,
-      aes(
-        x = (start + end)/2,
-        y = ytext,
-        label = label,
-        hjust = 0.5,
-        vjust=ifelse(label=="CDR3",3.5,0.5)
-      ),
-      inherit.aes = FALSE,
-      size = 3.5
-    )
-}
-
 # ---- SAVE PLOT ----
-ggsave(output_plot, p, width = 14, height = 6 + max(features$feature_tier), dpi = 300)
-cat("\u2714 Saved plot:", output_plot, "\n")
-### End ###
+ggsave(
+  filename = output_plot,
+  plot     = p,
+  width    = 12,
+  height   = 8,
+  units    = "in"
+)
+# End
