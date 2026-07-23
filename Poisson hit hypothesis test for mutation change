@@ -1,0 +1,70 @@
+###################################################
+#     Poisson hit hypothesis test for mutation    #
+#           changes of *TWO* timepoints           #
+#             Version 1.0 (July 2026)            #
+#         Written by Adam A. Capoferri, PhD       #
+###################################################
+
+# There are 4 important notes at the end, please read #
+
+library(dplyr)
+
+# need to include the number of observed mutations
+# currently allowing zeros but please contact me if we should normalize so that it is <1/n
+df <- data.frame(
+  mutation = c("A>G","G>A","C>T","T>C","A>C","C>A",
+               "A>T","T>A","C>G","G>C","G>T","T>G"),
+  pre  = c(1, 8, 2, 28, 1, 12, 0, 0, 1, 1, 8, 1),
+  post = c(2, 0, 8, 50, 2, 2, 1, 2, 4, 0, 3, 5)
+)
+
+per_mutation <- df %>%
+  rowwise() %>%
+  mutate(
+    test = list(
+      poisson.test(
+        x = c(pre, post),
+        T = c(273752, 233624) #total number of possible nucleotide sites pre and post (see note 1)
+      )
+    ),
+    estimate = test$estimate,          # rate ratio (pre / post)
+    conf.low = test$conf.int[1],
+    conf.high = test$conf.int[2],
+    p.value = test$p.value
+  ) %>%
+  ungroup()
+
+# Multiple testing correction (Note 2)
+per_mutation$p.adj <- p.adjust(per_mutation$p.value, method = "BH")
+
+# Preparing results
+results_csv <- per_mutation %>%
+  mutate(
+    rate_pre  = pre  / 273752, # should match value above
+    rate_post = post / 233624 # should match value above
+  ) %>%
+  select(
+    mutation,
+    pre,
+    post,
+    estimate,
+    conf.low,
+    conf.high,
+    p.value,
+    p.adj
+  )
+
+write.csv(
+  results_csv,
+  "name_exact_Poisson_rate_tests.csv", # change the file name as needed (Notes 3 & 4)
+  row.names = FALSE
+)
+
+# Note 1: The calculation here is the product of uncollapsed sequences and length of sequence.
+
+# Note 2: Mutation-specific rate changes based on exact Poisson rate test. This will of course be dependent also on differing sequence depth. The rate ratios are reported with 95% confidence intervals for each mutation type. P-values are adjusted for multiple testing using the Benjamini-Hochberg (BH) procedure.
+
+# Note 3: Forest plot showing the mutation-specific rate ratios with the exact 95% CIs. Values extending beyond plot limits should be indicated by arrows. Dashed vertical line indicates no change (ratio = 1). 
+
+# Note 4: Infinite bounds arise naturally from exact Poisson inference with zero events observed in one group. I have taken to displaying a truncated CI with arrows, follwoing standard practice for rare-event analyses.
+# End
