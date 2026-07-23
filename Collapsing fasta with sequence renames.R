@@ -1,18 +1,17 @@
 ###################################################
 #              Collapsing sequences               #
 #             Version 1.0 (June 2025)             #
-#           Written by Adam A. Capoferri, PhD     #
-#    Contact information: adam.capoferri@nih.gov  #
+#           Written by Adam A. Capoferri, PhD     #               
 ###################################################
 
 # Collapse .fasta sequences where you are able to change the name and isolate 1 to n where the number of sequences collapsed is transferred to "()". So PID A isolate (10) indicates 10 sequences were collapsed into one.
 
-# Version for nucleotide based alignments
-# Load library
+# As always, ensure all packages are installed first.
+
 library(Biostrings)
 
 # ---- Load FASTA ----
-fasta_file <- "PID X_alignment without master.fasta" #switch with .fasta you want
+fasta_file <- "name.fasta" #switch with .fasta you want
 sequences <- readDNAStringSet(fasta_file)
 
 # ---- Collapse identical sequences ----
@@ -23,14 +22,14 @@ collapsed <- split(seq_df$name, seq_df$seq)
 # ---- Create isolate names with unique number and collapsed count ----
 isolate_ids <- seq_along(collapsed)
 counts <- lengths(collapsed)
-isolate_labels <- paste0("PID X isolate ", isolate_ids, " (", counts, ")")
+isolate_labels <- paste0("PID_gene_mutation_timepoint_isolate_", isolate_ids, "_(", counts, ")")
 
 # ---- Create collapsed DNAStringSet ----
 unique_seqs <- DNAStringSet(names(collapsed))
 names(unique_seqs) <- isolate_labels
 
 # ---- Write collapsed FASTA ----
-writeXStringSet(unique_seqs, "PID X_alignment without master_collapsed.fasta")
+writeXStringSet(unique_seqs, "name_collapsed.fasta")
 
 # ---- Create and write mapping CSV ----
 mapping_df <- data.frame(
@@ -39,6 +38,7 @@ mapping_df <- data.frame(
   stringsAsFactors = FALSE
 )
 
-write.csv(mapping_df, "PID X_alignment without master_collapsed.csv", row.names = FALSE)
+# This file maps the original sequence name to the changed unique ID name
+write.csv(mapping_df, "201403_KRAS_G12D_pre_withoutmaster_collapsed.csv", row.names = FALSE)
 
-### END ###
+# End
