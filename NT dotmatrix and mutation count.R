@@ -10,7 +10,7 @@ library(Biostrings)
 library(tidyverse)
 
 # input fasta (reference sequence must be first sequence)
-fasta_file <- "file_name.fasta" 
+fasta_file <- "201403_KRAS_G12D_prepost_withcon.fasta" 
 
 # read the alignment
 seqs <- readDNAStringSet(fasta_file)
@@ -251,22 +251,22 @@ sub_summary_extended <- bind_rows(
 # this file will list each sequence (ref seq not shown), where '.' indicate a MATCH and alternative will show as A/C/T/G/-
 write.csv(
   mutation_matrix,
-  "file_name_matrix.csv",
+  "name_matrix.csv",
   row.names = TRUE
 )
 
 # this file will have the extended table with the directional substitution counts, symmetric counts, deaminase, total mutations, Ti/Tv, base composition, etc
 write.csv(
   sub_summary_extended,
-  "file_name__matrix_extended.csv",
+  "name_matrix_extended.csv",
   row.names = FALSE
 )
 
 # this file will list each sequence and the number of total mutations and GR>AR and NGR>NAR
 write.csv(
   context_table,
-  "file_name_deaminase_context_per_sequence.csv",
+  "name_deaminase_context_per_sequence.csv",
   row.names = FALSE
 )
 
-### END ###
+# End
